@@ -1,0 +1,16 @@
+{
+  "short_name": "Adjamé Market",
+  "name": "Adjamé Market — Grossistes Côte d'Ivoire",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#1B4D3E",
+  "theme_color": "#1B4D3E",
+  "display": "standalone",
+  "orientation": "portrait"
+}

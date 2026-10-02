@@ -1,0 +1,54 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isImageBelow5MB() {
+      return request.resource.size < 5 * 1024 * 1024
+          && request.resource.contentType.matches('image/.*');
+    }
+
+    function isDocumentBelow10MB() {
+      return request.resource.size < 10 * 1024 * 1024
+          && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+    }
+
+    // Avatars utilisateurs
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isImageBelow5MB();
+    }
+
+    // Photos publiques des boutiques
+    match /shops/{shopId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImageBelow5MB();
+    }
+
+    // Catalogue produits (photos des cartons et arrivages)
+    match /products/{shopId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImageBelow5MB();
+    }
+
+    // Documents KYC confidentiels (CNI, factures CIE/SODECI, baux commerciaux)
+    // STRICTEMENT RESTREINT AU GROSSISTE CONCERNÉ ET AUX ADMINISTRATEURS
+    match /kyc/{wholesalerId}/{docId} {
+      allow read: if isOwner(wholesalerId) || (request.auth.token.role == 'ADMIN');
+      allow write: if isOwner(wholesalerId) && isDocumentBelow10MB();
+    }
+
+    // Preuves de signalements et litiges
+    match /reports/{reportId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isDocumentBelow10MB();
+    }
+  }
+}
